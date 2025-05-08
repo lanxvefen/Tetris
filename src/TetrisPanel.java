@@ -10,7 +10,9 @@ public class TetrisPanel extends JPanel implements ActionListener {
     private Timer timer;
     private int score;
     private Block currentBlock;
+    private Block nextBlock;
     private int dropInterval = 500;
+    private boolean isPaused = false;
 
     public TetrisPanel() {
         board = new int[BOARD_HEIGHT][BOARD_WIDTH];
@@ -21,10 +23,11 @@ public class TetrisPanel extends JPanel implements ActionListener {
 
     public void startGame() {
         clearBoard();
-        newBlock();
         score = 0;
         dropInterval = 500;
         timer.setDelay(dropInterval);
+        nextBlock = Block.randomBlock();
+        newBlock();
         timer.start();
     }
 
@@ -37,9 +40,8 @@ public class TetrisPanel extends JPanel implements ActionListener {
     }
 
     private void newBlock() {
-        Random random = new Random();
-        int shape = random.nextInt(7);
-        currentBlock = new Block(shape);
+        currentBlock = nextBlock;
+        nextBlock = Block.randomBlock();
         currentBlock.x = BOARD_WIDTH / 2;
         currentBlock.y = 0;
         if (!canMove(currentBlock, 0, 0)) {
@@ -55,7 +57,7 @@ public class TetrisPanel extends JPanel implements ActionListener {
             if (x < 0 || x >= BOARD_WIDTH || y >= BOARD_HEIGHT) {
                 return false;
             }
-            if (y >= 0 && y < BOARD_HEIGHT && board[y][x] != 0) {
+            if (y >= 0 && board[y][x] != 0) {
                 return false;
             }
         }
@@ -88,12 +90,10 @@ public class TetrisPanel extends JPanel implements ActionListener {
                     System.arraycopy(board[k - 1], 0, board[k], 0, BOARD_WIDTH);
                 }
                 for (int j = 0; j < BOARD_WIDTH; j++) board[0][j] = 0;
-                i++; // 重新检查新的一行
+                i++;
             }
         }
         score += linesCleared * 100;
-
-        // 提升速度
         if (linesCleared > 0 && dropInterval > 100) {
             dropInterval -= 20;
             timer.setDelay(dropInterval);
@@ -101,7 +101,7 @@ public class TetrisPanel extends JPanel implements ActionListener {
     }
 
     private int getBlockSize() {
-        return Math.min(getWidth() / BOARD_WIDTH, getHeight() / BOARD_HEIGHT);
+        return Math.min(getWidth() / (BOARD_WIDTH + 5), getHeight() / BOARD_HEIGHT);
     }
 
     @Override
@@ -146,21 +146,44 @@ public class TetrisPanel extends JPanel implements ActionListener {
             }
         }
 
+        // 得分
         g.setColor(Color.WHITE);
         g.setFont(new Font("Arial", Font.BOLD, 20));
-        String scoreText = "得分: " + score;
-        int textWidth = g.getFontMetrics().stringWidth(scoreText);
-        g.drawString(scoreText, getWidth() - textWidth - 10, 20);
+        g.drawString("得分: " + score, BOARD_WIDTH * blockSize + 20, 30);
+
+        // 下一块
+        g.drawString("下一块：", BOARD_WIDTH * blockSize + 20, 70);
+        if (nextBlock != null) {
+            Color nextColor = Color.getHSBColor((float) (nextBlock.shape * 0.1), 1, 1);
+            for (int i = 0; i < 4; i++) {
+                int x = nextBlock.coords[i][0];
+                int y = nextBlock.coords[i][1];
+                g.setColor(nextColor);
+                g.fillRect(BOARD_WIDTH * blockSize + 20 + (x + 1) * blockSize, 80 + (y + 1) * blockSize, blockSize, blockSize);
+                g.setColor(Color.BLACK);
+                g.drawRect(BOARD_WIDTH * blockSize + 20 + (x + 1) * blockSize, 80 + (y + 1) * blockSize, blockSize, blockSize);
+            }
+        }
+
+        if (isPaused) {
+            g.setColor(new Color(255, 255, 255, 150));
+            g.fillRect(0, 0, getWidth(), getHeight());
+            g.setColor(Color.RED);
+            g.setFont(new Font("Arial", Font.BOLD, 40));
+            g.drawString("暂停中", getWidth() / 2 - 60, getHeight() / 2);
+        }
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        if (canMove(currentBlock, 0, 1)) {
-            currentBlock.y++;
-        } else {
-            mergeBlock();
+        if (!isPaused) {
+            if (canMove(currentBlock, 0, 1)) {
+                currentBlock.y++;
+            } else {
+                mergeBlock();
+            }
+            repaint();
         }
-        repaint();
     }
 
     private void hardDrop() {
@@ -171,9 +194,16 @@ public class TetrisPanel extends JPanel implements ActionListener {
         repaint();
     }
 
+    private void togglePause() {
+        isPaused = !isPaused;
+        repaint();
+    }
+
     private class KeyHandler extends KeyAdapter {
         @Override
         public void keyPressed(KeyEvent e) {
+            if (currentBlock == null || isPaused) return;
+
             int key = e.getKeyCode();
             switch (key) {
                 case KeyEvent.VK_LEFT:
@@ -191,6 +221,9 @@ public class TetrisPanel extends JPanel implements ActionListener {
                     break;
                 case KeyEvent.VK_SPACE:
                     hardDrop();
+                    break;
+                case KeyEvent.VK_P:
+                    togglePause();
                     break;
             }
             repaint();
