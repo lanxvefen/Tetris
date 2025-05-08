@@ -13,6 +13,10 @@ public class TetrisPanel extends JPanel implements ActionListener {
     private Block nextBlock;
     private int dropInterval = 500;
     private boolean isPaused = false;
+    
+    // 添加中文字体
+    private Font chineseFont = new Font("微软雅黑", Font.BOLD, 20);
+    private Font chineseFontLarge = new Font("微软雅黑", Font.BOLD, 40);
 
     public TetrisPanel() {
         board = new int[BOARD_HEIGHT][BOARD_WIDTH];
@@ -146,12 +150,13 @@ public class TetrisPanel extends JPanel implements ActionListener {
             }
         }
 
-        // 得分
+        // 得分 - 使用中文字体
         g.setColor(Color.WHITE);
-        g.setFont(new Font("Arial", Font.BOLD, 20));
+        g.setFont(chineseFont);
         g.drawString("得分: " + score, BOARD_WIDTH * blockSize + 20, 30);
 
-        // 下一块
+        // 下一块 - 使用中文字体
+        g.setFont(chineseFont);
         g.drawString("下一块：", BOARD_WIDTH * blockSize + 20, 70);
         if (nextBlock != null) {
             Color nextColor = Color.getHSBColor((float) (nextBlock.shape * 0.1), 1, 1);
@@ -169,7 +174,7 @@ public class TetrisPanel extends JPanel implements ActionListener {
             g.setColor(new Color(255, 255, 255, 150));
             g.fillRect(0, 0, getWidth(), getHeight());
             g.setColor(Color.RED);
-            g.setFont(new Font("Arial", Font.BOLD, 40));
+            g.setFont(chineseFontLarge);  // 使用大号中文字体
             g.drawString("暂停中", getWidth() / 2 - 60, getHeight() / 2);
         }
     }
