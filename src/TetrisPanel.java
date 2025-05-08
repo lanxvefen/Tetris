@@ -43,6 +43,17 @@ public class TetrisPanel extends JPanel implements ActionListener {
         }
     }
 
+    // 添加游戏结束回调接口
+    public interface GameEndListener {
+        void onGameEnd(int finalScore);
+    }
+    
+    private GameEndListener gameEndListener;
+    
+    public void setGameEndListener(GameEndListener listener) {
+        this.gameEndListener = listener;
+    }
+
     private void newBlock() {
         currentBlock = nextBlock;
         nextBlock = Block.randomBlock();
@@ -51,6 +62,11 @@ public class TetrisPanel extends JPanel implements ActionListener {
         if (!canMove(currentBlock, 0, 0)) {
             timer.stop();
             JOptionPane.showMessageDialog(this, "游戏结束！得分: " + score);
+            
+            // 通知游戏结束
+            if (gameEndListener != null) {
+                gameEndListener.onGameEnd(score);
+            }
         }
     }
 
@@ -199,11 +215,34 @@ public class TetrisPanel extends JPanel implements ActionListener {
         repaint();
     }
 
-    private void togglePause() {
+    // 添加暂停/继续游戏的公共方法
+    public void togglePauseGame() {
         isPaused = !isPaused;
-        repaint();
+        if (isPaused) {
+            timer.stop();
+        } else {
+            timer.start();
+        }
+        repaint();  // 重绘界面以显示暂停状态
     }
-
+    
+    // 删除或修改 togglePause() 方法，统一使用 togglePauseGame()
+    private void togglePause() {
+        togglePauseGame();  // 调用公共方法，保持一致性
+    }
+    
+    // 获取游戏运行状态
+    
+    // 修改游戏运行状态判断逻辑
+    public boolean isGameRunning() {
+        return timer.isRunning();  // 只需检查计时器是否在运行
+    }
+    
+    // 添加游戏暂停状态判断方法
+    public boolean isGamePaused() {
+        return isPaused;
+    }
+    
     private class KeyHandler extends KeyAdapter {
         @Override
         public void keyPressed(KeyEvent e) {

@@ -2,12 +2,20 @@ import javax.swing.*;
 import java.awt.*;
 
 public class TetrisGame extends JFrame {
+    private TetrisPanel gamePanel;
+    private JButton gameButton;  // 将按钮声明为成员变量
+
     public TetrisGame() {
         setTitle("俄罗斯方块");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
 
-        TetrisPanel gamePanel = new TetrisPanel();
+        gamePanel = new TetrisPanel();
+        gamePanel.setGameEndListener(finalScore -> {
+            // 游戏结束时重置按钮
+            gameButton.setText("开始游戏");
+            gameButton.setBackground(new Color(50, 205, 50));  // 绿色
+        });
         add(gamePanel, BorderLayout.CENTER);
 
         JPanel sidePanel = new JPanel();
@@ -36,32 +44,51 @@ public class TetrisGame extends JFrame {
         helpText.setBackground(Color.LIGHT_GRAY);
         helpText.setFont(chinesePlainFont);
 
-        // 创建更美观的开始游戏按钮
-        JButton startButton = new JButton("开始游戏");
-        startButton.setFont(buttonFont);
-        startButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-        startButton.setPreferredSize(new Dimension(150, 50));  // 设置按钮大小
-        startButton.setMaximumSize(new Dimension(150, 50));    // 确保按钮不会被拉伸
-        startButton.setBackground(new Color(50, 205, 50));     // 设置绿色背景
-        startButton.setForeground(Color.WHITE);                // 设置白色文字
-        startButton.setFocusPainted(false);                    // 移除焦点边框
-        startButton.setBorderPainted(true);                    // 保留边框
-        startButton.setBorder(BorderFactory.createRaisedBevelBorder());  // 添加立体边框效果
-        startButton.setCursor(new Cursor(Cursor.HAND_CURSOR)); // 鼠标悬停时显示手型光标
+        // 创建更美观的游戏控制按钮
+        gameButton = new JButton("开始游戏");
+        gameButton.setFont(buttonFont);
+        gameButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+        gameButton.setPreferredSize(new Dimension(150, 50));  // 设置按钮大小
+        gameButton.setMaximumSize(new Dimension(150, 50));    // 确保按钮不会被拉伸
+        gameButton.setBackground(new Color(50, 205, 50));     // 设置绿色背景
+        gameButton.setForeground(Color.WHITE);                // 设置白色文字
+        gameButton.setFocusPainted(false);                    // 移除焦点边框
+        gameButton.setBorderPainted(true);                    // 保留边框
+        gameButton.setBorder(BorderFactory.createRaisedBevelBorder());  // 添加立体边框效果
+        gameButton.setCursor(new Cursor(Cursor.HAND_CURSOR)); // 鼠标悬停时显示手型光标
         
         // 添加鼠标悬停效果
-        startButton.addMouseListener(new java.awt.event.MouseAdapter() {
+        gameButton.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseEntered(java.awt.event.MouseEvent evt) {
-                startButton.setBackground(new Color(0, 180, 0));  // 鼠标悬停时颜色变深
+                gameButton.setBackground(new Color(0, 180, 0));  // 鼠标悬停时颜色变深
             }
             
             public void mouseExited(java.awt.event.MouseEvent evt) {
-                startButton.setBackground(new Color(50, 205, 50));  // 恢复原来的颜色
+                gameButton.setBackground(new Color(50, 205, 50));  // 恢复原来的颜色
             }
         });
         
-        startButton.addActionListener(e -> {
-            gamePanel.startGame();
+        // 修改按钮的动作监听器
+        gameButton.addActionListener(e -> {
+            String buttonText = gameButton.getText();
+            
+            if (buttonText.equals("开始游戏")) {
+                // 开始新游戏
+                gamePanel.startGame();
+                gameButton.setText("暂停游戏");
+                gameButton.setBackground(new Color(255, 165, 0));  // 橙色
+            } else if (buttonText.equals("暂停游戏")) {
+                // 暂停游戏
+                gamePanel.togglePauseGame();
+                gameButton.setText("继续游戏");
+                gameButton.setBackground(new Color(65, 105, 225));  // 蓝色
+            } else if (buttonText.equals("继续游戏")) {
+                // 继续游戏
+                gamePanel.togglePauseGame();
+                gameButton.setText("暂停游戏");
+                gameButton.setBackground(new Color(255, 165, 0));  // 橙色
+            }
+            
             // 确保游戏面板获得焦点，这样键盘事件才能被捕获
             gamePanel.requestFocusInWindow();
         });
@@ -76,7 +103,7 @@ public class TetrisGame extends JFrame {
         JPanel buttonPanel = new JPanel();
         buttonPanel.setLayout(new FlowLayout(FlowLayout.CENTER));
         buttonPanel.setBackground(Color.LIGHT_GRAY);
-        buttonPanel.add(startButton);
+        buttonPanel.add(gameButton);
         
         sidePanel.add(buttonPanel);
         sidePanel.add(Box.createVerticalStrut(30));  // 增加底部边距
